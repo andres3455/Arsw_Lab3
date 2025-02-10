@@ -2,9 +2,7 @@ package edu.eci.arst.concprg.prodcons;
 
 import java.util.List;
 
-/**
- * Clase principal para probar la detección de servidores en listas negras.
- */
+
 public class BlackListMain {
     
     private static final String TARGET_IP = "202.24.34.55";

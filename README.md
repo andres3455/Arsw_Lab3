@@ -100,6 +100,279 @@ public class BlackListController {
 
 ```
 
+### Clase ThreadHostBlackLists
+
+Esta clase es la implementación de un hilo que se encarga de buscar si una direccion esta en la lista negra , dentro de un rango de listas especificas
+
+```
+package edu.eci.arst.concprg.prodcons;
+
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class ThreadHostBlackLists extends Thread {
+    private int a;
+    private int b;
+    private HostBlacklistsData SourceFacadeBlacklist;
+    private int checkedListsCount = 0;
+    private int ocurrencesCount = 0;
+    private String ip;
+    private final int BLACK_LIST_ALARM_COUNT = 5;
+    private BlackListController controlador;
+    private List<Integer> blacklistedServers; // Lista de servidores en blacklist
+
+    public ThreadHostBlackLists(int a, int b, HostBlacklistsData SourceFacadeBlacklist, String ip, BlackListController controlador) {
+        this.a = a;
+        this.b = b;
+        this.SourceFacadeBlacklist = SourceFacadeBlacklist;
+        this.ip = ip;
+        this.controlador = controlador;
+        this.blacklistedServers = new ArrayList<>(); // Inicializa la lista
+    }
+
+    @Override
+    public void run() {  
+        for (int i = a; i <= b && ocurrencesCount < BLACK_LIST_ALARM_COUNT; i++) {
+            checkedListsCount++;
+            if (controlador.validate()) {
+                break;
+            }
+            if (SourceFacadeBlacklist.isInBlackListServer(i, ip)) {
+                blacklistedServers.add(i); // Agregar el servidor a la lista
+                if (controlador.IncrementOcurrence()) {
+                    ocurrencesCount++;
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+
+    public synchronized int getOcurrencesCount() {
+        return ocurrencesCount;
+    }
+
+    public int getCheckedListsCount() {
+        return checkedListsCount;
+    }
+
+    public List<Integer> getBlackListedServers() {
+        return blacklistedServers; 
+    }
+}
+
+
+```
+
+
+### Clase HostBlacklistsData
+
+Esta clase es la simulación de una base de datos de listas negras de servidores, Permite hacer la correcta verificación y registra la información sobre los accesos de los hilos que la consultan 
+
+```
+package edu.eci.arst.concprg.prodcons;
+
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+public class HostBlacklistsData {
+    
+    private static final Logger LOG = Logger.getLogger(HostBlacklistsData.class.getName());
+    private static final HostBlacklistsData INSTANCE = new HostBlacklistsData();
+    private static final ConcurrentHashMap<Tuple<Integer, String>, Object> BLACKLIST_OCCURRENCES = new ConcurrentHashMap<>();
+    
+    private final Map<String, Integer> threadHits = new ConcurrentHashMap<>();
+    private String lastConfig = null;
+    private int lastIndex = 0;
+
+    static {
+        Object anyObject = new Object();
+        
+        addToBlacklist(anyObject, "200.24.34.55", 23, 50, 200, 1000, 500);
+        addToBlacklist(anyObject, "202.24.34.55", 29, 10034, 20200, 31000, 70500);
+        addToBlacklist(anyObject, "202.24.34.54", 39, 10134, 20300, 70210);
+    }
+    
+    private static void addToBlacklist(Object marker, String ip, Integer... serverNumbers) {
+        for (Integer serverNumber : serverNumbers) {
+            BLACKLIST_OCCURRENCES.put(new Tuple<>(serverNumber, ip), marker);
+        }
+    }
+    
+    private HostBlacklistsData() {}
+    
+    public static HostBlacklistsData getInstance() {
+        return INSTANCE;
+    }
+    
+    public int getRegisteredServersCount() {
+        return 100000;
+    }
+    
+    public boolean isInBlackListServer(int serverNumber, String ip) {
+        threadHits.merge(Thread.currentThread().getName(), 1, Integer::sum);
+        
+        if (Boolean.parseBoolean(System.getProperty("threadsinfo"))) {
+            lastConfig = threadHits.toString();
+            lastIndex = serverNumber;
+        }
+        
+        try {
+            Thread.sleep(0, 1);
+        } catch (InterruptedException ex) {
+            LOG.log(Level.SEVERE, "Thread interrupted", ex);
+            Thread.currentThread().interrupt();
+        }
+        
+        return BLACKLIST_OCCURRENCES.containsKey(new Tuple<>(serverNumber, ip));
+    }
+    
+    public void reportAsNotTrustworthy(String host) {
+        LOG.info(() -> "HOST " + host + " reported as NOT trustworthy");
+        
+        if (Boolean.parseBoolean(System.getProperty("threadsinfo"))) {
+            System.out.printf("Total threads: %d%n%s%nLast Index: %d%n",
+                    threadHits.size(), lastConfig, lastIndex);
+        }
+    }
+    
+    public void reportAsTrustworthy(String host) {
+        LOG.info(() -> "HOST " + host + " reported as trustworthy");
+    }
+}
+
+class Tuple<T1, T2> {
+    private final T1 firstElement;
+    private final T2 secondElement;
+
+    public Tuple(T1 firstElement, T2 secondElement) {
+        this.firstElement = firstElement;
+        this.secondElement = secondElement;
+    }
+
+    public T1 getFirstElement() {
+        return firstElement;
+    }
+
+    public T2 getSecondElement() {
+        return secondElement;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(firstElement, secondElement);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Tuple<?, ?> other = (Tuple<?, ?>) obj;
+        return Objects.equals(firstElement, other.firstElement) &&
+               Objects.equals(secondElement, other.secondElement);
+    }
+}
+
+
+```
+
+### Clase HostBlackListsValidator
+
+Esta clase utiliza concurrencia para acelerar la busqueda, con el fin de verificar si la direccion estan las listas negras 
+
+```
+package edu.eci.arst.concprg.prodcons;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+public class HostBlackListsValidator {
+
+    private static final int BLACK_LIST_ALARM_COUNT = 5;
+    private static final Logger LOG = Logger.getLogger(HostBlackListsValidator.class.getName());
+    private final HostBlacklistsData skds = HostBlacklistsData.getInstance();
+    
+    public List<Integer> checkHost(String ipAddress, int numThreads) {
+        int totalServers = skds.getRegisteredServersCount();
+        int rangePerThread = totalServers / numThreads;
+        int remainder = totalServers % numThreads;
+        
+        List<ThreadHostBlackLists> threads = new ArrayList<>();
+        BlackListController controller = new BlackListController();
+        
+        for (int i = 0; i < numThreads; i++) {
+            int start = i * rangePerThread + Math.min(i, remainder);
+            int end = start + rangePerThread + (i < remainder ? 1 : 0) - 1;
+            
+            ThreadHostBlackLists thread = new ThreadHostBlackLists(start, end, skds, ipAddress, controller);
+            threads.add(thread);
+            thread.start();
+        }
+        
+        List<Integer> blackListOccurrences = new ArrayList<>();
+        int occurrencesCount = 0;
+        int checkedListsCount = 0;
+        
+        for (ThreadHostBlackLists thread : threads) {
+            try {
+                thread.join();
+                occurrencesCount += thread.getOcurrencesCount();
+                checkedListsCount += thread.getCheckedListsCount();
+                blackListOccurrences.addAll(thread.getBlackListedServers());
+            } catch (InterruptedException e) {
+                LOG.log(Level.SEVERE, "Thread interrupted", e);
+            }
+        }
+        
+        if (occurrencesCount >= BLACK_LIST_ALARM_COUNT) {
+            skds.reportAsNotTrustworthy(ipAddress);
+        } else {
+            skds.reportAsTrustworthy(ipAddress);
+        }
+        
+        LOG.log(Level.INFO, "Checked Black Lists: {0} of {1}", new Object[]{checkedListsCount, totalServers});
+        
+        return blackListOccurrences;
+    }
+}
+
+```
+Finalmente la clase main.
+
+### Clase main
+
+package edu.eci.arst.concprg.prodcons;
+
+import java.util.List;
+
+public class BlackListMain {
+    
+    private static final String TARGET_IP = "202.24.34.55";
+    private static final int THREAD_COUNT = 50;
+
+    public static void main(String[] args) {
+        HostBlackListsValidator validator = new HostBlackListsValidator();
+        List<Integer> blackListOccurrences = validator.checkHost(TARGET_IP, THREAD_COUNT);
+
+        System.out.println(String.format("El host %s fue encontrado en las siguientes listas negras: %s", 
+                                          TARGET_IP, blackListOccurrences));
+
+        int availableProcessors = Runtime.getRuntime().availableProcessors();
+        System.out.println(String.format("Número de núcleos disponibles: %d", availableProcessors));
+    }
+}
+
+
+Pruebas de funcionamiento
+![](img/11.png)
+
+
 ##### Parte III. – Avance para el martes, antes de clase.
 
 Sincronización y Dead-Locks.

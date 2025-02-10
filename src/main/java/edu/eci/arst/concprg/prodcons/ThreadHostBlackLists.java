@@ -3,26 +3,23 @@ package edu.eci.arst.concprg.prodcons;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *
- * @author Acer
- */
+
 public class ThreadHostBlackLists extends Thread {
     private int a;
     private int b;
-    private HostBlacklistsDataSourceFacade skds;
+    private HostBlacklistsData SourceFacadeBlacklist;
     private int checkedListsCount = 0;
     private int ocurrencesCount = 0;
-    private String ipaddress;
+    private String ip;
     private final int BLACK_LIST_ALARM_COUNT = 5;
     private BlackListController controlador;
     private List<Integer> blacklistedServers; // Lista de servidores en blacklist
 
-    public ThreadHostBlackLists(int a, int b, HostBlacklistsDataSourceFacade skds, String ipaddress, BlackListController controlador) {
+    public ThreadHostBlackLists(int a, int b, HostBlacklistsData SourceFacadeBlacklist, String ip, BlackListController controlador) {
         this.a = a;
         this.b = b;
-        this.skds = skds;
-        this.ipaddress = ipaddress;
+        this.SourceFacadeBlacklist = SourceFacadeBlacklist;
+        this.ip = ip;
         this.controlador = controlador;
         this.blacklistedServers = new ArrayList<>(); // Inicializa la lista
     }
@@ -34,7 +31,7 @@ public class ThreadHostBlackLists extends Thread {
             if (controlador.validate()) {
                 break;
             }
-            if (skds.isInBlackListServer(i, ipaddress)) {
+            if (SourceFacadeBlacklist.isInBlackListServer(i, ip)) {
                 blacklistedServers.add(i); // Agregar el servidor a la lista
                 if (controlador.IncrementOcurrence()) {
                     ocurrencesCount++;

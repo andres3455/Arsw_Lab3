@@ -6,10 +6,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class HostBlacklistsDataSourceFacade {
+public class HostBlacklistsData {
     
-    private static final Logger LOG = Logger.getLogger(HostBlacklistsDataSourceFacade.class.getName());
-    private static final HostBlacklistsDataSourceFacade INSTANCE = new HostBlacklistsDataSourceFacade();
+    private static final Logger LOG = Logger.getLogger(HostBlacklistsData.class.getName());
+    private static final HostBlacklistsData INSTANCE = new HostBlacklistsData();
     private static final ConcurrentHashMap<Tuple<Integer, String>, Object> BLACKLIST_OCCURRENCES = new ConcurrentHashMap<>();
     
     private final Map<String, Integer> threadHits = new ConcurrentHashMap<>();
@@ -30,9 +30,9 @@ public class HostBlacklistsDataSourceFacade {
         }
     }
     
-    private HostBlacklistsDataSourceFacade() {}
+    private HostBlacklistsData() {}
     
-    public static HostBlacklistsDataSourceFacade getInstance() {
+    public static HostBlacklistsData getInstance() {
         return INSTANCE;
     }
     
