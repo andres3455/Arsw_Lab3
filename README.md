@@ -432,6 +432,17 @@ N X 100
 ```
 
 
+3. Al ejecutar la aplicación y pulsar repetidas veces el boton "pause and check", veremos lo siguiente:
+
+
+![](img/12.png)
+
+![](img/13.png)
+
+![](img/14.png)
+
+Como vemos no se cumple el invariante 
+
 <!--
 ### Criterios de evaluación
 
