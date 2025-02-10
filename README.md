@@ -347,6 +347,8 @@ Finalmente la clase main.
 
 ### Clase main
 
+```
+
 package edu.eci.arst.concprg.prodcons;
 
 import java.util.List;
@@ -368,6 +370,7 @@ public class BlackListMain {
     }
 }
 
+```
 
 Pruebas de funcionamiento
 ![](img/11.png)
