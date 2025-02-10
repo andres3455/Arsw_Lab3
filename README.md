@@ -5,7 +5,7 @@
 
 #### Ejercicio – programación concurrente, condiciones de carrera y sincronización de hilos. EJERCICIO INDIVIDUAL O EN PAREJAS.
 
-##### Parte I – Antes de terminar la clase.
+## Parte I 
 
 Control de hilos con wait/notify. Productor/consumidor.
 
@@ -14,12 +14,91 @@ Control de hilos con wait/notify. Productor/consumidor.
 3. Haga que ahora el productor produzca muy rápido, y el consumidor consuma lento. Teniendo en cuenta que el productor conoce un límite de Stock (cuantos elementos debería tener, a lo sumo en la cola), haga que dicho límite se respete. Revise el API de la colección usada como cola para ver cómo garantizar que dicho límite no se supere. Verifique que, al poner un límite pequeño para el 'stock', no haya consumo alto de CPU ni errores.
 
 
-##### Parte II. – Antes de terminar la clase.
+## DESARROLLO PARTE I
+
+la clase responsable es consumer ya que realiza un bucle infinito cuando la cola esta vacia, como se muestra en la siguiente imagen 
+![](img/1.png)
+![](img/2.png)
+
+Para utilizar eficientemente la cpu, podemos utilizar bloques sincronizados, para interrumpir los hilos hasta que el producer agregue mas elementos, y por consiguiente el producer debe notificar al consumer cuando hay nuevos elementos
+
+### Clase Producer
+
+![](img/3.png)
+
+### Clase Consumer
+![](img/4.png)
+
+En lugar de ejecutar un bucle infinito, espera (wait()) hasta que el producer agregue un elemento.
+
+Ahora veamos como el rendimiento se ve fuertemente reducido
+
+![](img/5.png)
+![](img/6.png)
+
+Para lograr que el productor produzca mas rapido sobre la velocidad que tienen el consumidor de consumir, podemos aplicar lo siguiente:
+
+Primero un limite de stock fijo, lo podemos lograr con una cola con capacidad limitada, se modificara el productor para que produzca elementos sin parar , de igual manera el consumidor se pausara antes de cada consumo
+
+
+![](img/7.png)
+![](img/8.png)
+![](img/9.png)
+
+y asi sera su consumo, que sigue siendo significativamente mas bajo que la primera version
+
+![](img/10.png)
+
+##### Parte II.
 
 Teniendo en cuenta los conceptos vistos de condición de carrera y sincronización, haga una nueva versión -más eficiente- del ejercicio anterior (el buscador de listas negras). En la versión actual, cada hilo se encarga de revisar el host en la totalidad del subconjunto de servidores que le corresponde, de manera que en conjunto se están explorando la totalidad de servidores. Teniendo esto en cuenta, haga que:
 
 - La búsqueda distribuida se detenga (deje de buscar en las listas negras restantes) y retorne la respuesta apenas, en su conjunto, los hilos hayan detectado el número de ocurrencias requerido que determina si un host es confiable o no (_BLACK_LIST_ALARM_COUNT_).
 - Lo anterior, garantizando que no se den condiciones de carrera.
+
+
+## DESARROLLO PARTE II 
+
+Para este ejericio, debemos implementar diferentes clases que vamos a necesitar para manejar diferentes aspectos del problema en si mismo 
+
+### Clase BlackListController
+
+Esta clase nos va a permitir determinar si un Host debe considerarse confiable segun la cantidad de ocurrencias en la lista
+
+```
+package edu.eci.arst.concprg.prodcons;
+
+public class BlackListController {
+    
+
+    private static final int AlarmCountBlackList = 5;
+    private int ocurrencesCount = 0;
+
+    public void InnerBlackListController (){
+        
+    }
+
+    public synchronized boolean IncrementOcurrence(){
+        boolean isvalid = false;
+        if (ocurrencesCount<AlarmCountBlackList){
+            ocurrencesCount++;
+            isvalid = true;
+        }
+
+        return isvalid;
+    }
+
+    public synchronized boolean validate(){
+        boolean isvalid = false;
+        if(ocurrencesCount==AlarmCountBlackList){
+            isvalid = true;
+        }
+        return isvalid;
+    }
+}
+
+
+```
 
 ##### Parte III. – Avance para el martes, antes de clase.
 
