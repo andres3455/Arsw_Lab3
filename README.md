@@ -372,7 +372,7 @@ public class BlackListMain {
 
 ```
 
-Pruebas de funcionamiento
+### Pruebas de funcionamiento
 ![](img/11.png)
 
 
@@ -418,6 +418,19 @@ Sincronización y Dead-Locks.
 	* Corrija el problema anterior __SIN hacer uso de sincronización__, pues volver secuencial el acceso a la lista compartida de inmortales haría extremadamente lenta la simulación.
 
 11. Para finalizar, implemente la opción STOP.
+
+
+
+## DESARROLLO PARTE 3
+
+2. Podemos concluir que cada inmortal es un hilo independiente, cada hilo independiente, selecciona de manera aleatoria a quien atacar.
+La funcionalidad clave esta en el metodo fight(),segun la hipotesis de que el invariante es la suma total de la vida de todos los inmortales deber ser constante, entonces podemos inferir que para N jugadores, el valor es
+
+```
+N X 100
+
+```
+
 
 <!--
 ### Criterios de evaluación

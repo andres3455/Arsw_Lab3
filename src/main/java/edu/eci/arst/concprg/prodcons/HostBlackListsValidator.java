@@ -9,7 +9,7 @@ public class HostBlackListsValidator {
 
     private static final int BLACK_LIST_ALARM_COUNT = 5;
     private static final Logger LOG = Logger.getLogger(HostBlackListsValidator.class.getName());
-    private final HostBlacklistsDataSourceFacade skds = HostBlacklistsDataSourceFacade.getInstance();
+    private final HostBlacklistsData skds = HostBlacklistsData.getInstance();
     
     public List<Integer> checkHost(String ipAddress, int numThreads) {
         int totalServers = skds.getRegisteredServersCount();
