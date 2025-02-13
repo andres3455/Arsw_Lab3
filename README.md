@@ -80,6 +80,7 @@ Sincronización y Dead-Locks.
 3. Ejecute la aplicación y verifique cómo funcionan las opción ‘pause and check’. Se cumple el invariante?.
 
 4. Una primera hipótesis para que se presente la condición de carrera para dicha función (pause and check), es que el programa consulta la lista cuyos valores va a imprimir, a la vez que otros hilos modifican sus valores. Para corregir esto, haga lo que sea necesario para que efectivamente, antes de imprimir los resultados actuales, se pausen todos los demás hilos. Adicionalmente, implemente la opción ‘resume’.
+	
 
 5. Verifique nuevamente el funcionamiento (haga clic muchas veces en el botón). Se cumple o no el invariante?.
 
@@ -128,6 +129,39 @@ N X 100
 ![](img/14.png)
 
 Como vemos no se cumple el invariante 
+4. Primero, se implementaron los metodos pause y resume, para pausar y reanudar la ejecucion de los hilos, para esto se utilizo un semaforo, que se encarga de controlar el acceso a la lista de inmortales, para que no se modifique mientras se esta imprimiendo, y se reanuda la ejecucion de los hilos, así:
+   ![](img/15.png)
+Posteriormente, al tener nuevas variables que controlan el estado de los hilos se modifica el metodo run de la clase para suspender de manera segura los hilos.
+![](img/16.png)
+Finalmente, se añaden los oyentes a los botones ```Pause and Check``` y ```Resume```, para que se ejecute la accion correspondiente al hacer clic en ellos.
+![](img/17.png)
+
+5. Revisando el comportamiento del programa después de implementar, veamos 3 ciclos de pausar y resumir
+![](img/18.png)
+![](img/19.png)
+![](img/20.png)
+En los 3 casos, se puede ver que e valor de la salud se mantiene en 290, por lo que el invariante si se cumple.
+6. Problema:
+Dos hilos pueden acceder simultáneamente a los mismos inmortales y modificar su salud sin control.
+Solución:
+
+   Usar bloques synchronized anidados para evitar condiciones de carrera.
+![](img/21.png)
+Numerales 7, 8 y 9 no se realizan debido a que en las pruebas el programa no falló y en los casos de prueba grandes tampoco se presentaron comportamientos extraños
+
+   10. Identificando posibles condiciones de carrera:
+       Actualmente, en la clase Immortal, si un inmortal muere (health <= 0), otros hilos pueden seguir atacándolo porque sigue existiendo en immortalsPopulation. Si intentamos removerlo directamente de la lista compartida, podrían ocurrir problemas como:
+   Excepciones de concurrencia: Si un hilo está iterando sobre immortalsPopulation mientras otro lo modifica.
+   Acceso a un objeto eliminado: Un inmortal podría intentar pelear con un oponente que ya ha sido eliminado.
+
+
+Sin sincronizar, la implementcación es la siguiente:
+![](img/22.png)
+![](img/23.png)
+
+
+11. Finalmente, implementando Stop:
+![](img/24.png)
 
 <!--
 ### Criterios de evaluación

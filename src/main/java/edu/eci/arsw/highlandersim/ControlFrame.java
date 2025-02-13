@@ -20,6 +20,8 @@ import java.awt.event.ActionEvent;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import java.awt.Color;
+import java.util.Timer;
+import java.util.TimerTask;
 import javax.swing.JScrollBar;
 
 public class ControlFrame extends JFrame {
@@ -56,6 +58,14 @@ public class ControlFrame extends JFrame {
      * Create the frame.
      */
     public ControlFrame() {
+        Timer cleanupTimer = new Timer(true);
+        cleanupTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                removeDeadImmortals();
+            }
+        }, 1000, 2000); // Se ejecuta cada 2 segundos
+
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(100, 100, 647, 248);
         contentPane = new JPanel();
@@ -87,10 +97,11 @@ public class ControlFrame extends JFrame {
         JButton btnPauseAndCheck = new JButton("Pause and check");
         btnPauseAndCheck.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-
-                /*
-				 * COMPLETAR
-                 */
+                synchronized (immortals) {
+                    for (Immortal im : immortals) {
+                        im.pauseImmortal();
+                    }
+                }
                 int sum = 0;
                 for (Immortal im : immortals) {
                     sum += im.getHealth();
@@ -108,9 +119,11 @@ public class ControlFrame extends JFrame {
 
         btnResume.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                /**
-                 * IMPLEMENTAR
-                 */
+                synchronized (immortals) {
+                    for (Immortal im : immortals) {
+                        im.resumeImmortal();
+                    }
+                }
 
             }
         });
@@ -127,6 +140,18 @@ public class ControlFrame extends JFrame {
 
         JButton btnStop = new JButton("STOP");
         btnStop.setForeground(Color.RED);
+        btnStop.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                synchronized (immortals) {
+                    for (Immortal im : immortals) {
+                        im.stopImmortal();
+                    }
+                    immortals.clear();
+                }
+                btnStart.setEnabled(true);
+            }
+        });
+
         toolBar.add(btnStop);
 
         scrollPane = new JScrollPane();
@@ -161,6 +186,12 @@ public class ControlFrame extends JFrame {
             return null;
         }
 
+    }
+
+    private void removeDeadImmortals() {
+        if (immortals != null) {
+            immortals.removeIf(immortal -> !immortal.isAlive());
+        }
     }
 
 }
